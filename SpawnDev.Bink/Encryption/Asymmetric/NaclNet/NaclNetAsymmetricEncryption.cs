@@ -1,11 +1,7 @@
 ﻿using Bink.Hashing;
 using NaCl;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-//using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 using RandomNumberGenerator = System.Security.Cryptography.RandomNumberGenerator;
 
 namespace Bink.Encryption.Asymmetric.NaclNet
@@ -21,7 +17,7 @@ namespace Bink.Encryption.Asymmetric.NaclNet
     //• Convert the encrypted key, hash, and signature to wire format.
     //• Concatenate with the encrypted packet.
     // https://cr.yp.to/highspeed/naclcrypto-20090310.pdf
-    
+
     // https://github.com/somdoron/NaCl.net
     public class NaclNetAsymmetricEncryption : AsymmetricBase
     {
@@ -33,7 +29,6 @@ namespace Bink.Encryption.Asymmetric.NaclNet
         private static string sharedPublicKey = "Fudx0AuU4moZYB8S3o418H/p6vUt1NIFOfsSGyHTmFk=";
         static byte[] sharedPrivateKeyBytes = Convert.FromBase64String(sharedPrivateKey);
         static byte[] sharedPublicKeyBytes = Convert.FromBase64String(sharedPublicKey);
-        BinkSHA1 BinkSHA1 = new BinkSHA1();
 
         public override int PrivateKeySize { get; }
         public override int PublicKeySize { get; }

@@ -15,20 +15,7 @@ GOTO :EOF
 ECHO Latest *.nupkg file is:
 ECHO %NewestFile%
 
-setlocal
-:PROMPT
-SET /P AREYOUSURE=Publish this package? y/[N]? 
-
-IF /I "%AREYOUSURE%" NEQ "Y" GOTO END
-
-set /p apikey=Enter api key: 
-@IF NOT [%apikey%] == [] (
-    REM dotnet nuget push "%releaseFolder%\%NewestFile%" --api-key %apikey% --source https://api.nuget.org/v3/index.json
-    nuget add "%releaseFolder%\%NewestFile%" -source "D:\users\SpawnDevPackages"
-) else (
-    @echo Cancelled
-)
-:END
-endlocal
+REM dotnet nuget push "%releaseFolder%\%NewestFile%" --api-key %apikey% --source https://api.nuget.org/v3/index.json
+nuget add "%releaseFolder%\%NewestFile%" -source "D:\users\SpawnDevPackages"
 
 pause
