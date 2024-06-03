@@ -1,5 +1,4 @@
-﻿using Bink.Hashing;
-using NaCl;
+﻿using NaCl;
 using System;
 using System.Linq;
 using RandomNumberGenerator = System.Security.Cryptography.RandomNumberGenerator;

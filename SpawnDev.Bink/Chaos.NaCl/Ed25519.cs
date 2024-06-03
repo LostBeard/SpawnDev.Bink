@@ -1,5 +1,5 @@
-﻿using System;
-using Chaos.NaCl.Internal.Ed25519Ref10;
+﻿using Chaos.NaCl.Internal.Ed25519Ref10;
+using System;
 
 namespace Chaos.NaCl
 {

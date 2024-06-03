@@ -1,6 +1,6 @@
+using NetMQ.Utils;
 using System;
 using System.Runtime.CompilerServices;
-using NetMQ.Utils;
 
 namespace NaCl.Internal
 {

@@ -1,5 +1,5 @@
-﻿using System;
-using NaCl.Internal; 
+﻿using NaCl.Internal;
+using System;
 
 namespace NaCl
 {

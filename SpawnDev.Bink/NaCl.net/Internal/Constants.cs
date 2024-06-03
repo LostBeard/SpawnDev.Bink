@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace NaCl.Internal
+﻿namespace NaCl.Internal
 {
-  internal static class Constants
+    internal static class Constants
   {
     public static readonly byte[] Sigma = new byte[] { (byte)'e', (byte)'x', (byte)'p', 
             (byte)'a', (byte)'n', (byte)'d', (byte)' ', (byte)'3', (byte)'2', (byte)'-', 

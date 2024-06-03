@@ -1,10 +1,6 @@
 ﻿using Chaos.NaCl;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-//using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 using RandomNumberGenerator = System.Security.Cryptography.RandomNumberGenerator;
 
 namespace Bink.Encryption.Asymmetric.ChaosNacl

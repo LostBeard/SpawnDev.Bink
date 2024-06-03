@@ -1,5 +1,5 @@
-﻿using System;
-using NaCl.Internal;
+﻿using NaCl.Internal;
+using System;
 using bytes = System.Span<byte>;
 using fe25519 = System.Span<int>;
 

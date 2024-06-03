@@ -1,6 +1,6 @@
+using NaCl.Internal;
 using System;
 using System.Security.Cryptography;
-using NaCl.Internal;
 
 namespace NaCl
 {
