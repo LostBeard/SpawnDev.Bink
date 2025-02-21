@@ -71,9 +71,9 @@ namespace Bink.Signing
             if (publicKey == null || publicKey.Length == 0) return false;
             if (signedObject is IExpirableSignedObject tmp)
             {
-                if (verifyTimestampIfExpirable && tmp.TokenExpiration > DateTime.MinValue)
+                if (verifyTimestampIfExpirable && tmp.TokenExpiration > DateTimeOffset.MinValue)
                 {
-                    if (DateTime.UtcNow > tmp.TokenExpiration) return false;
+                    if (DateTimeOffset.UtcNow > tmp.TokenExpiration) return false;
                 }
             }
             var token = signedObject.Token;
@@ -147,17 +147,17 @@ namespace Bink.Signing
             return Sign(Encoding.UTF8.GetBytes(message), privateKey);
         }
 
-        public void Sign<T>(T obj, string privateKey, DateTime expirationUtc) where T : IExpirableSignedObject
+        public void Sign<T>(T obj, string privateKey, DateTimeOffset expirationUtc) where T : IExpirableSignedObject
         {
             Sign<T>(obj, KeyToBytes(privateKey), expirationUtc);
         }
 
-        public void Sign<T>(T obj, byte[] privateKey, DateTime expirationUtc) where T : IExpirableSignedObject
+        public void Sign<T>(T obj, byte[] privateKey, DateTimeOffset expirationUtc) where T : IExpirableSignedObject
         {
             obj.Token = "";
             obj.Alg = Algorithm;
             obj.TokenExpiration = expirationUtc;
-            obj.TokenSigned = DateTime.UtcNow;
+            obj.TokenSigned = DateTimeOffset.UtcNow;
             var origMessage = JsonSerializer.Serialize(obj);
             obj.Token = TokenToString(Sign(Encoding.UTF8.GetBytes(origMessage), privateKey));
         }
@@ -171,8 +171,8 @@ namespace Bink.Signing
         {
             obj.Token = "";
             obj.Alg = Algorithm;
-            obj.TokenExpiration = DateTime.UtcNow + timeToLive;
-            obj.TokenSigned = DateTime.UtcNow;
+            obj.TokenExpiration = DateTimeOffset.UtcNow + timeToLive;
+            obj.TokenSigned = DateTimeOffset.UtcNow;
             var origMessage = JsonSerializer.Serialize(obj);
             obj.Token = TokenToString(Sign(Encoding.UTF8.GetBytes(origMessage), privateKey));
         }
@@ -230,7 +230,7 @@ namespace Bink.Signing
         {
             var ret = true;
             if (obj.Signatures == null || obj.Signatures.Count == 0) return true;
-            var now = DateTime.UtcNow;
+            var now = DateTimeOffset.UtcNow;
             var sigs = obj.Signatures;
             obj.Signatures = new List<ExpirableSignature>();
             var requiredKeys = requiredPublicKeys == null ? null : new List<string>(requiredPublicKeys.Distinct());
@@ -249,7 +249,7 @@ namespace Bink.Signing
                 }
                 if (maxSignTimeDeviation != null)
                 {
-                    var diffSeconds = (DateTime.UtcNow - sig.TokenSigned).TotalSeconds;
+                    var diffSeconds = (DateTimeOffset.UtcNow - sig.TokenSigned).TotalSeconds;
                     // TODO - probably should disallow signatures from too far into the future...
                     var deviation = Math.Abs(diffSeconds);
                     if (deviation > maxDeviationSeconds)
@@ -275,7 +275,7 @@ namespace Bink.Signing
         {
             var ret = true;
             if (obj.Signatures == null || obj.Signatures.Count == 0) return true;
-            var now = DateTime.UtcNow;
+            var now = DateTimeOffset.UtcNow;
             var sigStash = new List<ExpirableSignature>();
             while (obj.Signatures.Count > 0)
             {
@@ -335,8 +335,8 @@ namespace Bink.Signing
             var obj = new ExpirableSignature();
             obj.KeyName = keyName;
             obj.Alg = Algorithm;
-            obj.TokenExpiration = DateTime.MaxValue;
-            obj.TokenSigned = DateTime.UtcNow;
+            obj.TokenExpiration = DateTimeOffset.MaxValue;
+            obj.TokenSigned = DateTimeOffset.UtcNow;
             obj.PublicKey = publicKey;
             var origMessage = JsonSerializer.Serialize(tobj);
             obj.Token = TokenToString(Sign(Encoding.UTF8.GetBytes(origMessage), privateKey));
@@ -379,8 +379,8 @@ namespace Bink.Signing
             var obj = new ExpirableSignature();
             obj.KeyName = keyName;
             obj.Alg = Algorithm;
-            obj.TokenExpiration = DateTime.UtcNow + timeToLive;
-            obj.TokenSigned = DateTime.UtcNow;
+            obj.TokenExpiration = DateTimeOffset.UtcNow + timeToLive;
+            obj.TokenSigned = DateTimeOffset.UtcNow;
             obj.PublicKey = publicKey;
             var origMessage = JsonSerializer.Serialize(tobj);
             obj.Token = TokenToString(Sign(Encoding.UTF8.GetBytes(origMessage), privateKey));
@@ -397,10 +397,10 @@ namespace Bink.Signing
             obj.Token = "";
             if (obj is IExpirableSignedObject tmp1)
             {
-                tmp1.TokenExpiration = DateTime.MinValue;
+                tmp1.TokenExpiration = DateTimeOffset.MinValue;
             }
             obj.Alg = Algorithm;
-            obj.TokenSigned = DateTime.UtcNow;
+            obj.TokenSigned = DateTimeOffset.UtcNow;
             var origMessage = JsonSerializer.Serialize(obj);
             var token = TokenToString(Sign(Encoding.UTF8.GetBytes(origMessage), privateKey));
             obj.Token = token;
@@ -408,18 +408,18 @@ namespace Bink.Signing
 
         public Dictionary<string, object> Sign(Dictionary<string, object> obj, byte[] privateKey, TimeSpan timeToLive)
         {
-            return Sign(obj, privateKey, DateTime.UtcNow + timeToLive);
+            return Sign(obj, privateKey, DateTimeOffset.UtcNow + timeToLive);
         }
 
         public Dictionary<string, object> Sign(Dictionary<string, object> obj, byte[] privateKey)
         {
-            return Sign(obj, privateKey, DateTime.MinValue);
+            return Sign(obj, privateKey, DateTimeOffset.MinValue);
         }
 
-        public Dictionary<string, object> Sign(Dictionary<string, object> obj, byte[] privateKey, DateTime expirationUtc)
+        public Dictionary<string, object> Sign(Dictionary<string, object> obj, byte[] privateKey, DateTimeOffset expirationUtc)
         {
             obj.Unset("Token");
-            if (expirationUtc == DateTime.MinValue)
+            if (expirationUtc == DateTimeOffset.MinValue)
             {
                 obj.Unset("TokenExpiration");
                 obj.Unset("TokenSigned");
@@ -427,7 +427,7 @@ namespace Bink.Signing
             else
             {
                 obj.Set("TokenExpiration", expirationUtc);
-                obj.Set("TokenSigned", DateTime.UtcNow);
+                obj.Set("TokenSigned", DateTimeOffset.UtcNow);
             }
             var origMessage = JsonSerializer.Serialize(obj);
             var token = TokenToString(Sign(Encoding.UTF8.GetBytes(origMessage), privateKey));
@@ -442,8 +442,8 @@ namespace Bink.Signing
             var expirationIsSet = signedObject.IsSet("TokenExpiration");
             if (expirationIsSet)
             {
-                var expiration = signedObject.Get<DateTime>("TokenExpiration");
-                if (verifyTimestampIfExpirable && expiration > DateTime.MinValue && DateTime.UtcNow > expiration)
+                var expiration = signedObject.Get<DateTimeOffset>("TokenExpiration");
+                if (verifyTimestampIfExpirable && expiration > DateTimeOffset.MinValue && DateTimeOffset.UtcNow > expiration)
                 {
                     return false;
                 }
@@ -504,31 +504,31 @@ namespace Bink.Signing
                 return result;
             }
         }
-        private static DateTime unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
-        private static DateTime UnixTimeStampToDateTime(double unixTimeStamp)
+        private static DateTimeOffset unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
+        private static DateTimeOffset UnixTimeStampToDateTime(double unixTimeStamp)
         {
             var ret = unixEpoch + TimeSpan.FromSeconds(unixTimeStamp);
             return ret.ToUniversalTime();
         }
 
-        private static double DateTimeToUnixTimeStamp(DateTime time)
+        private static double DateTimeToUnixTimeStamp(DateTimeOffset time)
         {
             var ret = time - unixEpoch;
             return ret.TotalSeconds;
         }
 
-        private static long DateTimeToUnixTimeStampInt64(DateTime time)
+        private static long DateTimeToUnixTimeStampInt64(DateTimeOffset time)
         {
             var ret = time - unixEpoch;
             return (long)Math.Round(ret.TotalSeconds);
         }
 
-        public string CreateJwtToken(List<Claim> claims, string privateKey, DateTime? expiration = null)
+        public string CreateJwtToken(List<Claim> claims, string privateKey, DateTimeOffset? expiration = null)
         {
             return CreateJwtToken(claims, KeyToBytes(privateKey), expiration);
         }
 
-        public string CreateJwtToken(List<Claim> claims, byte[] privateKey, DateTime? expiration = null)
+        public string CreateJwtToken(List<Claim> claims, byte[] privateKey, DateTimeOffset? expiration = null)
         {
             var claimsKVPList = new List<KeyValuePair<string, object>>();
             foreach (var claim in claims)
@@ -565,9 +565,9 @@ namespace Bink.Signing
             }
             return CreateJwtToken(claimsKVPList, privateKey, expiration);
         }
-        public string CreateJwtToken(List<KeyValuePair<string, object>> claims, byte[] privateKey, DateTime? expiration = null)
+        public string CreateJwtToken(List<KeyValuePair<string, object>> claims, byte[] privateKey, DateTimeOffset? expiration = null)
         {
-            var now = DateTime.UtcNow;
+            var now = DateTimeOffset.UtcNow;
             var header = new Dictionary<string, object>();
             var payload = new Dictionary<string, object>();
             header.Add("alg", Algorithm);

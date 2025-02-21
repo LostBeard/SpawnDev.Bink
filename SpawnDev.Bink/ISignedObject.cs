@@ -7,24 +7,24 @@ namespace Bink
     {
         string Alg { get; set; }
         string Token { get; set; }
-        DateTime TokenSigned { get; set; }
+        DateTimeOffset TokenSigned { get; set; }
     }
     public abstract class SignedObject : ISignedObject
     {
         public string Alg { get; set; } = "";
         public string Token { get; set; } = "";
-        public DateTime TokenSigned { get; set; } = DateTime.MinValue;
+        public DateTimeOffset TokenSigned { get; set; } = DateTimeOffset.MinValue;
     }
     public interface IExpirableSignedObject : ISignedObject
     {
-        DateTime TokenExpiration { get; set; }
+        DateTimeOffset TokenExpiration { get; set; }
     }
     public abstract class ExpirableSignedObject : IExpirableSignedObject
     {
         public string Alg { get; set; } = "";
         public string Token { get; set; } = "";
-        public DateTime TokenExpiration { get; set; } = DateTime.MinValue;
-        public DateTime TokenSigned { get; set; } = DateTime.MinValue;
+        public DateTimeOffset TokenExpiration { get; set; } = DateTimeOffset.MinValue;
+        public DateTimeOffset TokenSigned { get; set; } = DateTimeOffset.MinValue;
     }
     public class ExpirableSignature
     {
@@ -32,8 +32,8 @@ namespace Bink
         public string Alg { get; set; } = "";
         public string Token { get; set; } = "";
         public string PublicKey { get; set; } = "";
-        public DateTime TokenExpiration { get; set; } = DateTime.MinValue;
-        public DateTime TokenSigned { get; set; } = DateTime.MinValue;
+        public DateTimeOffset TokenExpiration { get; set; } = DateTimeOffset.MinValue;
+        public DateTimeOffset TokenSigned { get; set; } = DateTimeOffset.MinValue;
     }
     public interface IMultiSignedObject
     {

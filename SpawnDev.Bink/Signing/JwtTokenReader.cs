@@ -30,7 +30,7 @@ namespace Bink.Signing
         public string Kid { get; private set; } = "";
         public string Jku { get; private set; } = "";
         // Standard claims
-        public DateTime Expiration { get; private set; } = DateTime.MaxValue;
+        public DateTimeOffset Expiration { get; private set; } = DateTimeOffset.MaxValue;
         // Header
         public string HeaderTyp { get; private set; } = "";
         public string HeaderAlg { get; private set; } = "";
@@ -86,7 +86,7 @@ namespace Bink.Signing
             if (exp > 0)
             {
                 Expiration = UnixTimeStampToDateTime(exp);
-                IsExpired = DateTime.UtcNow > Expiration;
+                IsExpired = DateTimeOffset.UtcNow > Expiration;
             }
             Kid = FindFirstValue("kid");
             Jku = FindFirstValue("jku");
@@ -186,15 +186,15 @@ namespace Bink.Signing
                     }
                     else
                     {
-                        if (jsonElement.TryGetDateTime(out DateTime datetime))
+                        if (jsonElement.TryGetDateTimeOffset(out DateTimeOffset datetime))
                         {
-                            if (datetime.Kind == DateTimeKind.Local)
-                            {
-                                if (jsonElement.TryGetDateTimeOffset(out DateTimeOffset datetimeOffset))
-                                {
-                                    return datetimeOffset;
-                                }
-                            }
+                            //if (datetime.Kind == DateTimeKind.Local)
+                            //{
+                            //    if (jsonElement.TryGetDateTimeOffset(out DateTimeOffset datetimeOffset))
+                            //    {
+                            //        return datetimeOffset;
+                            //    }
+                            //}
                             return datetime;
                         }
                         return jsonElement.ToString();
@@ -340,29 +340,25 @@ namespace Bink.Signing
         {
             return base64Encoded.TrimEnd(padding).Replace('+', '-').Replace('/', '_');
         }
-        private static DateTime unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
-        private static DateTime UnixTimeStampToDateTime(double unixTimeStamp)
+        private static DateTimeOffset unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
+        private static DateTimeOffset UnixTimeStampToDateTime(double unixTimeStamp)
         {
             var ret = unixEpoch + TimeSpan.FromSeconds(unixTimeStamp);
             return ret.ToUniversalTime();
         }
-        private static long DateTimeToUnixTimeStampInt64(DateTime time)
+        private static long DateTimeToUnixTimeStampInt64(DateTimeOffset time)
         {
             var ret = time - unixEpoch;
             return (long)Math.Round(ret.TotalSeconds);
         }
-        private static double DateTimeToUnixTimeStamp(DateTime time)
+        private static double DateTimeToUnixTimeStamp(DateTimeOffset time)
         {
             var ret = time - unixEpoch;
             return ret.TotalSeconds;
         }
         private static T DeserializeJsonElement<T>(JsonElement el)
         {
-            T ret = default;
-            ret = el.Deserialize<T>();
-            //var txt = el.GetRawText();
-            //ret = JsonSerializer.Deserialize<T>(txt);
-            return ret;
+            return el.Deserialize<T>();
         }
     }
 }

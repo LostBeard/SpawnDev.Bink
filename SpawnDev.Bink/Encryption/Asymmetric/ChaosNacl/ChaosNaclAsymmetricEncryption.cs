@@ -17,7 +17,9 @@ namespace Bink.Encryption.Asymmetric.ChaosNacl
     //• Concatenate with the encrypted packet.
     // https://cr.yp.to/highspeed/naclcrypto-20090310.pdf
 
-    // https://github.com/somdoron/NaCl.net
+    /// <summary>
+    /// https://github.com/somdoron/NaCl.net
+    /// </summary>
     public class ChaosNaclAsymmetricEncryption : AsymmetricBase
     {
 

@@ -28,8 +28,7 @@ namespace Bink.Hashing
 		/// </summary>
 		/// <param name="isBigEndian">Should return bytes result as big endian or little endian</param>
 		// Crc32 by dariogriffo uses big endian, so, we need to be compatible and return big endian as default
-		public Crc32Algorithm(bool isBigEndian = true)
-			: this()
+		public Crc32Algorithm(bool isBigEndian = true) : this()
 		{
 			_isBigEndian = isBigEndian;
 		}

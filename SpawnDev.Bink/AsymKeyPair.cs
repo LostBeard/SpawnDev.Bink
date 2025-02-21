@@ -4,7 +4,7 @@ namespace Bink
 {
     public class AsymKeyPair
     {
-        public DateTime Created { get; set; } = DateTime.UtcNow;
+        public DateTimeOffset Created { get; set; } = DateTimeOffset.UtcNow;
         public string Algorithm { get; set; } = "";
         public string KeyName { get; set; } = "";
         public string PrivateKey { get; set; } = "";
@@ -32,7 +32,7 @@ namespace Bink
     }
     public class AsymKeyPairB
     {
-        public DateTime Created { get; set; } = DateTime.UtcNow;
+        public DateTimeOffset Created { get; set; } = DateTimeOffset.UtcNow;
         public string Algorithm { get; set; } = "";
         public string KeyName { get; set; } = "";
         public byte[] PrivateKey { get; set; }
