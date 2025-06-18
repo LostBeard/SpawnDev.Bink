@@ -1,7 +1,9 @@
 ﻿using Bink.Extensions;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -522,83 +524,49 @@ namespace Bink.Signing
             var ret = time - unixEpoch;
             return (long)Math.Round(ret.TotalSeconds);
         }
-
         public string CreateJwtToken(List<Claim> claims, string privateKey, DateTimeOffset? expiration = null)
         {
             return CreateJwtToken(claims, KeyToBytes(privateKey), expiration);
         }
-
         public string CreateJwtToken(List<Claim> claims, byte[] privateKey, DateTimeOffset? expiration = null)
         {
-            var claimsKVPList = new List<KeyValuePair<string, object>>();
-            foreach (var claim in claims)
-            {
-                switch (claim.ValueType)
-                {
-                    case ClaimValueTypes.Integer:
-                    case ClaimValueTypes.Integer32:
-                    case ClaimValueTypes.Integer64:
-                        if (long.TryParse(claim.Value, out var valueUlong))
-                            claimsKVPList.Add(new KeyValuePair<string, object>(claim.Type, valueUlong.ToString()));
-                        break;
-                    case ClaimValueTypes.UInteger32:
-                    case ClaimValueTypes.UInteger64:
-                        if (ulong.TryParse(claim.Value, out var valueLong))
-                            claimsKVPList.Add(new KeyValuePair<string, object>(claim.Type, valueLong.ToString()));
-                        break;
-                    case ClaimValueTypes.Double:
-                        if (double.TryParse(claim.Value, out var valueDouble))
-                            claimsKVPList.Add(new KeyValuePair<string, object>(claim.Type, valueDouble.ToString()));
-                        break;
-                    case ClaimValueTypes.Boolean:
-                        if (bool.TryParse(claim.Value, out var valueBool))
-                            claimsKVPList.Add(new KeyValuePair<string, object>(claim.Type, valueBool.ToString()));
-                        break;
-                    case ClaimValueTypes.Email:
-                    case ClaimValueTypes.String:
-                        claimsKVPList.Add(new KeyValuePair<string, object>(claim.Type, claim.Value));
-                        break;
-                    default:
-                        claimsKVPList.Add(new KeyValuePair<string, object>(claim.Type, claim.Value));
-                        break;
-                }
-            }
-            return CreateJwtToken(claimsKVPList, privateKey, expiration);
+            var user = new ClaimsPrincipal(new ClaimsIdentity(claims));
+            return CreateJwtToken(user, privateKey, expiration);
         }
-        public string CreateJwtToken(List<KeyValuePair<string, object>> claims, byte[] privateKey, DateTimeOffset? expiration = null)
+        public string CreateJwtToken(ClaimsPrincipal user, byte[] privateKey, DateTimeOffset? expiration = null)
         {
+            var identity = user.Identities.FirstOrDefault();
             var now = DateTimeOffset.UtcNow;
             var header = new Dictionary<string, object>();
-            var payload = new Dictionary<string, object>();
             header.Add("alg", Algorithm);
             header.Add("typ", "JWT");
-            var keys = claims.Select(o => o.Key).Distinct().ToList();
-            foreach (var key in keys)
-            {
-                var values = claims.Where(o => o.Key == key).Select(o => o.Value);
-                payload.Add(key, values.Count() > 1 ? values : values.First());
-            }
             if (expiration != null)
             {
-                payload.Add("exp", DateTimeToUnixTimeStampInt64(expiration.Value));
+                identity.AddClaim(new Claim("exp", DateTimeToUnixTimeStampInt64(expiration.Value).ToString()));
             }
             var iat = DateTimeToUnixTimeStampInt64(now);
-            payload.Add("iat", iat);
-            payload.Add("nbf", iat);
-            var token = CreateJwtToken(header, payload, privateKey);
+            identity.AddClaim(new Claim("iat", iat.ToString()));
+            identity.AddClaim(new Claim("nbf", iat.ToString()));
+            var payloadBase64UrlEncoded = JwtTokenReader.ClaimsPrincipalToBase64Url(user);
+            var token = CreateJwtToken(header, payloadBase64UrlEncoded, privateKey);
             return token;
         }
-
-        private string CreateJwtToken(Dictionary<string, object> header, Dictionary<string, object> claims, byte[] privateKey)
+        /// <summary>
+        /// Creates a signed token
+        /// </summary>
+        /// <param name="header"></param>
+        /// <param name="payloadBase64UrlEncoded"></param>
+        /// <param name="privateKey"></param>
+        /// <returns></returns>
+        private string CreateJwtToken(Dictionary<string, object> header, string payloadBase64UrlEncoded, byte[] privateKey)
         {
             var headerBase64UrlEncoded = SerializeToBase64UrlEncoded(header);
-            var payloadBase64UrlEncoded = SerializeToBase64UrlEncoded(claims);
             var msg = $"{headerBase64UrlEncoded}.{payloadBase64UrlEncoded}";
-            var signatureBase64UrlEncoded = ToBase64UrlEncoded(Sign(msg, privateKey));
+            var signature = Sign(msg, privateKey);
+            var signatureBase64UrlEncoded = ToBase64UrlEncoded(signature);
             var token = $"{msg}.{signatureBase64UrlEncoded}";
             return token;
         }
-
         public string SerializeToBase64UrlEncoded<T>(T obj)
         {
             var jsonBytes = JsonSerializer.SerializeToUtf8Bytes(obj);

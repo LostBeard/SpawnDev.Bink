@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Bink.Extensions;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Claims;
@@ -13,6 +15,48 @@ namespace Bink.Signing
     public class JwtTokenReader
     {
 
+        public static ClaimsPrincipal ClaimsPrincipalFromBytes(byte[] claimsPrincipalBytes)
+        {
+            ClaimsPrincipal ret;
+            using (var ms = new MemoryStream(claimsPrincipalBytes))
+            {
+                using (var tmp = new BinaryReader(ms))
+                {
+                    ret = new ClaimsPrincipal(tmp);
+                }
+            }
+            return ret;
+        }
+        public static ClaimsPrincipal ClaimsPrincipalFromBase64(string claimsPrincipalBase64)
+        {
+            return ClaimsPrincipalFromBytes(Convert.FromBase64String(claimsPrincipalBase64));
+        }
+        public static string ClaimsPrincipalToBase64(ClaimsPrincipal claimsPrincipal)
+        {
+            return Convert.ToBase64String(ClaimsPrincipalToBytes(claimsPrincipal));
+        }
+        public static string ClaimsPrincipalToBase64Url(ClaimsPrincipal claimsPrincipal)
+        {
+            return ToBase64UrlEncoded(ClaimsPrincipalToBytes(claimsPrincipal));
+        }
+        public static ClaimsPrincipal ClaimsPrincipalFromBase64Url(string claimsPrincipalBase64)
+        {
+            return ClaimsPrincipalFromBytes(Base64UrlEncodedToBytes(claimsPrincipalBase64));
+        }
+        public static byte[] ClaimsPrincipalToBytes(ClaimsPrincipal claimsPrincipal)
+        {
+            byte[] claimsPrincipalBytes;
+            using (var ms = new MemoryStream())
+            {
+                using (var tmp = new BinaryWriter(ms))
+                {
+                    claimsPrincipal.WriteTo(tmp);
+                }
+                ms.Flush();
+                claimsPrincipalBytes = ms.GetBuffer();
+            }
+            return claimsPrincipalBytes;
+        }
         public static ClaimsPrincipal GetClaimsPrincipal(string token, bool allowExpired = false)
         {
             var tmp = new JwtTokenReader(token);
@@ -22,7 +66,7 @@ namespace Bink.Signing
         public byte[] SignedSection { get; private set; } = new byte[0];
         public byte[] SignatureBytes { get; private set; } = new byte[0];
         public Dictionary<string, JsonElement> Header { get; private set; } = new Dictionary<string, JsonElement>();
-        public Dictionary<string, JsonElement> Payload { get; private set; } = new Dictionary<string, JsonElement>();
+        //public Dictionary<string, JsonElement> Payload { get; private set; } = new Dictionary<string, JsonElement>();
         // Reserved claims
         public string Iss { get; private set; } = "";
         public string Sub { get; private set; } = "";
@@ -78,28 +122,25 @@ namespace Bink.Signing
             string PayloadStr = Encoding.UTF8.GetString(PayloadBytes);
 #endif
             Header = DeserializeBase64UrlEncoded<Dictionary<string, JsonElement>>(parts[0]);
-            Payload = DeserializeBase64UrlEncoded<Dictionary<string, JsonElement>>(parts[1]);
+            //Payload = DeserializeBase64UrlEncoded<Dictionary<string, JsonElement>>(parts[1]);
             HeaderAlg = HeaderFindFirstValue("alg");
             HeaderTyp = HeaderFindFirstValue("typ");
 
-            var exp = FindFirstValue<double>("exp");
+            var tokenClaimsPrincipal = JwtTokenReader.ClaimsPrincipalFromBase64Url(parts[1]); // new ClaimsPrincipal(new ClaimsIdentity(claims, this.GetType().Name));
+            ExpiredClaimsPrincipal = tokenClaimsPrincipal;
+
+            var exp = tokenClaimsPrincipal.FindFirstValue<double>("exp");
             if (exp > 0)
             {
                 Expiration = UnixTimeStampToDateTime(exp);
                 IsExpired = DateTimeOffset.UtcNow > Expiration;
             }
-            Kid = FindFirstValue("kid");
-            Jku = FindFirstValue("jku");
-            Iss = FindFirstValue("iss");
-            Aud = FindFirstValue("aud");
-            Sub = FindFirstValue("sub");
-            var claims = new List<Claim>();
-            foreach (var kvp in Payload)
-            {
-                ParseElement(claims, kvp.Key, kvp.Value);
-            }
-            var tokenClaimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(claims, this.GetType().Name));
-            ExpiredClaimsPrincipal = tokenClaimsPrincipal;
+            Kid = tokenClaimsPrincipal.FindFirstValue("kid");
+            Jku = tokenClaimsPrincipal.FindFirstValue("jku");
+            Iss = tokenClaimsPrincipal.FindFirstValue("iss");
+            Aud = tokenClaimsPrincipal.FindFirstValue("aud");
+            Sub = tokenClaimsPrincipal.FindFirstValue("sub");
+
             if (!IsExpired)
             {
                 IsValid = true;
@@ -219,46 +260,46 @@ namespace Bink.Signing
             }
         }
 
-        public string FindFirstValue(string type)
-        {
-            var all = FindAll<string>(type);
-            return all.FirstOrDefault();
-        }
-        public T FindFirstValue<T>(string type)
-        {
-            var all = FindAll<T>(type);
-            return all.FirstOrDefault();
-        }
-        public List<string> FindAll(string type)
-        {
-            return FindAll<string>(type);
-        }
-        public List<T> FindAll<T>(string type)
-        {
-            var ret = new List<T>();
-            if (Payload.TryGetValue(type, out var el))
-            {
-                if (el.ValueKind == JsonValueKind.Array)
-                {
-                    try
-                    {
-                        var tmp = DeserializeJsonElement<List<T>>(el);
-                        if (tmp != null) ret = tmp;
-                    }
-                    catch { }
-                }
-                else
-                {
-                    try
-                    {
-                        var tmp = DeserializeJsonElement<T>(el);
-                        ret.Add(tmp);
-                    }
-                    catch { }
-                }
-            }
-            return ret;
-        }
+        //public string FindFirstValue(string type)
+        //{
+        //    var all = FindAll<string>(type);
+        //    return all.FirstOrDefault();
+        //}
+        //public T FindFirstValue<T>(string type)
+        //{
+        //    var all = FindAll<T>(type);
+        //    return all.FirstOrDefault();
+        //}
+        //public List<string> FindAll(string type)
+        //{
+        //    return FindAll<string>(type);
+        //}
+        //public List<T> FindAll<T>(string type)
+        //{
+        //    var ret = new List<T>();
+        //    if (Payload.TryGetValue(type, out var el))
+        //    {
+        //        if (el.ValueKind == JsonValueKind.Array)
+        //        {
+        //            try
+        //            {
+        //                var tmp = DeserializeJsonElement<List<T>>(el);
+        //                if (tmp != null) ret = tmp;
+        //            }
+        //            catch { }
+        //        }
+        //        else
+        //        {
+        //            try
+        //            {
+        //                var tmp = DeserializeJsonElement<T>(el);
+        //                ret.Add(tmp);
+        //            }
+        //            catch { }
+        //        }
+        //    }
+        //    return ret;
+        //}
 
         public string HeaderFindFirstValue(string type)
         {
