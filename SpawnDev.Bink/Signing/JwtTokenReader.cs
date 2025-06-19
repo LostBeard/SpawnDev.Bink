@@ -14,7 +14,6 @@ namespace Bink.Signing
     // https://auth0.com/docs/secure/tokens/json-web-tokens/validate-json-web-tokens
     public class JwtTokenReader
     {
-
         public static ClaimsPrincipal ClaimsPrincipalFromBytes(byte[] claimsPrincipalBytes)
         {
             ClaimsPrincipal ret;
@@ -60,7 +59,12 @@ namespace Bink.Signing
         public static ClaimsPrincipal GetClaimsPrincipal(string token, bool allowExpired = false)
         {
             var tmp = new JwtTokenReader(token);
-            return allowExpired ? tmp.ExpiredClaimsPrincipal : tmp.ClaimsPrincipal;
+            if (allowExpired)
+            {
+                return tmp.ExpiredClaimsPrincipal;
+            }
+            tmp.ClaimsPrincipal.RemoveExpiredClaims();
+            return tmp.ClaimsPrincipal;
         }
         public string Token { get; private set; }
         public byte[] SignedSection { get; private set; } = new byte[0];

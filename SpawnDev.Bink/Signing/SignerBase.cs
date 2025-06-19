@@ -530,7 +530,7 @@ namespace Bink.Signing
         }
         public string CreateJwtToken(List<Claim> claims, byte[] privateKey, DateTimeOffset? expiration = null)
         {
-            var user = new ClaimsPrincipal(new ClaimsIdentity(claims));
+            var user = new ClaimsPrincipal(new ClaimsIdentity(claims, this.GetType().Name));
             return CreateJwtToken(user, privateKey, expiration);
         }
         public string CreateJwtToken(ClaimsPrincipal user, byte[] privateKey, DateTimeOffset? expiration = null)
