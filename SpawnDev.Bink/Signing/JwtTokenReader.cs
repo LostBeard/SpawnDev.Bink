@@ -126,12 +126,45 @@ namespace Bink.Signing
             string PayloadStr = Encoding.UTF8.GetString(PayloadBytes);
 #endif
             Header = DeserializeBase64UrlEncoded<Dictionary<string, JsonElement>>(parts[0]);
-            //Payload = DeserializeBase64UrlEncoded<Dictionary<string, JsonElement>>(parts[1]);
             HeaderAlg = HeaderFindFirstValue("alg");
             HeaderTyp = HeaderFindFirstValue("typ");
 
-            var tokenClaimsPrincipal = JwtTokenReader.ClaimsPrincipalFromBase64Url(parts[1]); // new ClaimsPrincipal(new ClaimsIdentity(claims, this.GetType().Name));
-            ExpiredClaimsPrincipal = tokenClaimsPrincipal;
+            ClaimsPrincipal tokenClaimsPrincipal;
+            // the token payload can be a claims dictionary or a full ClaimsPrincipal
+            if (parts[1].StartsWith("ey"))  // 'ey' is base64 byte 123 which is a left bracket '{'
+            {
+                try
+                {
+                    // Dictionary<string, object>
+                    var Payload = DeserializeBase64UrlEncoded<Dictionary<string, JsonElement>>(parts[1]);
+                    var claims = new List<Claim>();
+                    foreach (var el in Payload)
+                    {
+                        ParseElement(claims, el.Key, el.Value);
+                    }
+                    var identity = new ClaimsIdentity(claims, nameof(JwtTokenReader));
+                    tokenClaimsPrincipal = new ClaimsPrincipal(identity);
+                }
+                catch
+                {
+                    ParseFailed = true;
+                    return;
+                }
+            }
+            else
+            {
+                // binary ClaimsPrincipal
+                try
+                {
+                    tokenClaimsPrincipal = ClaimsPrincipalFromBase64Url(parts[1]); // new ClaimsPrincipal(new ClaimsIdentity(claims, this.GetType().Name));
+                    ExpiredClaimsPrincipal = tokenClaimsPrincipal;
+                }
+                catch
+                {
+                    ParseFailed = true;
+                    return;
+                }
+            }
 
             var exp = tokenClaimsPrincipal.FindFirstValue<double>("exp");
             if (exp > 0)
@@ -223,6 +256,8 @@ namespace Bink.Signing
             {
                 case JsonValueKind.Object:
                 case JsonValueKind.Array:
+                    var array = jsonElement.Deserialize<List<JsonElement>>();
+
                     throw new NotSupportedException();
                 case JsonValueKind.String:
                     if (jsonElement.TryGetGuid(out Guid guidValue))

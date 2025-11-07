@@ -1,5 +1,4 @@
-﻿using Bink.Extensions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -9,6 +8,12 @@ namespace Bink
 {
     public static class ClaimsPrincipalExtensions
     {
+        public static string FindFirstValue(this ClaimsPrincipal claimsPrincipal, string type)
+        {
+            var tmp = claimsPrincipal.Claims.Where(x => x.Type == type).FirstOrDefault();
+            if (tmp == null) return null;
+            return tmp.Value;
+        }
         /// <summary>
         /// Removes claims that have a 'exp' property that has a datetime in the past.
         /// </summary>
