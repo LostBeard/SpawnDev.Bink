@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Bink.Extensions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -6,14 +7,11 @@ using System.Text.Json;
 
 namespace Bink
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public static class ClaimsPrincipalExtensions
     {
-        public static string FindFirstValue(this ClaimsPrincipal claimsPrincipal, string type)
-        {
-            var tmp = claimsPrincipal.Claims.Where(x => x.Type == type).FirstOrDefault();
-            if (tmp == null) return null;
-            return tmp.Value;
-        }
         /// <summary>
         /// Removes claims that have a 'exp' property that has a datetime in the past.
         /// </summary>
@@ -37,13 +35,19 @@ namespace Bink
             }
         }
 
-        // polyFill for NET48
-        public static T? FindFirstValue<T>(this ClaimsPrincipal _this, string type)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="_this"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static T FindFirstValue<T>(this ClaimsPrincipal _this, string type)
         {
             var obj = _this.FindFirstValue(type);
             if (typeof(T) == typeof(string))
             {
-                return (T?)(object)obj;
+                return (T)(object)obj;
             }
             return JsonSerializer.Deserialize<T>(obj);
         }
